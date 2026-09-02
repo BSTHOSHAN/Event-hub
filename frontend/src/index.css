@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #f0f0f0;
+  --color-foreground: #121212;
+  --color-primary-red: #d02020;
+  --color-primary-blue: #1040c0;
+  --color-primary-yellow: #f0c020;
+  --color-muted: #e0e0e0;
+
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-hard-sm: 3px 3px 0px 0px #121212;
+  --shadow-hard-md: 6px 6px 0px 0px #121212;
+  --shadow-hard-lg: 8px 8px 0px 0px #121212;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Bauhaus dot-grid texture used behind hero/panel sections */
+.bauhaus-dots {
+  background-image: radial-gradient(#121212 1.5px, transparent 1.5px);
+  background-size: 18px 18px;
+}

@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MEMBER
+  MENTOR
+  MANAGER
+}
+
+enum AttendanceStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(MEMBER)
+  coins        Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  eventsCreated Event[]      @relation("EventCreator")
+  attendances   Attendance[] @relation("Attendee")
+  confirmations Attendance[] @relation("ConfirmedBy")
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  location    String?
+  startsAt    DateTime
+  endsAt      DateTime?
+  coinValue   Int       @default(10)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdById String
+  createdBy   User @relation("EventCreator", fields: [createdById], references: [id])
+
+  attendances Attendance[]
+}
+
+model Attendance {
+  id            String           @id @default(cuid())
+  eventId       String
+  userId        String
+  status        AttendanceStatus @default(PENDING)
+  coinsAwarded  Int
+  requestedAt   DateTime         @default(now())
+  confirmedById String?
+  confirmedAt   DateTime?
+
+  event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user        User  @relation("Attendee", fields: [userId], references: [id])
+  confirmedBy User? @relation("ConfirmedBy", fields: [confirmedById], references: [id])
+
+  @@unique([eventId, userId])
+}
