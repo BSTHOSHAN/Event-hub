@@ -21,6 +21,7 @@ export function Navbar() {
           {[
             { to: '/', label: 'Events', end: true },
             { to: '/leaderboard', label: 'Leaderboard', end: false },
+            ...(user.role === 'MENTOR' || user.role === 'MANAGER' ? [{ to: '/stats', label: 'Stats', end: false }] : []),
           ].map((link) => (
             <NavLink
               key={link.to}

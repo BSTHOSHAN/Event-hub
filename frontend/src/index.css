@@ -37,3 +37,38 @@ body {
   background-image: radial-gradient(#121212 1.5px, transparent 1.5px);
   background-size: 18px 18px;
 }
+
+:focus-visible {
+  outline: 2px solid var(--color-primary-blue);
+  outline-offset: 2px;
+}
+
+/* Accessibility settings, toggled via the floating menu and persisted to localStorage */
+
+html[data-a11y-font='large'] {
+  font-size: 118%;
+}
+
+html[data-a11y-font='x-large'] {
+  font-size: 135%;
+}
+
+html[data-a11y-motion='reduce'] * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+html[data-a11y-contrast='high'] .bauhaus-dots {
+  background-image: none;
+}
+
+html[data-a11y-contrast='high'] .border-2 {
+  border-width: 4px;
+}
+
+html[data-a11y-contrast='high'] :focus-visible {
+  outline-width: 4px;
+  outline-offset: 3px;
+}

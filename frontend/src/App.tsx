@@ -1,10 +1,12 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
+import { AccessibilityMenu } from './components/AccessibilityMenu';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { EventsPage } from './pages/EventsPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
+import { StatsPage } from './pages/StatsPage';
 
 function App() {
   return (
@@ -30,9 +32,18 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/stats"
+            element={
+              <ProtectedRoute roles={['MENTOR', 'MANAGER']}>
+                <StatsPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
+      <AccessibilityMenu />
     </>
   );
 }

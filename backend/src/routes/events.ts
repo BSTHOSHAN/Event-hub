@@ -14,6 +14,29 @@ const attendanceInclude = {
   confirmedBy: { select: { id: true, name: true } },
 } as const;
 
+const RECURRENCE_FREQUENCIES = ["DAILY", "WEEKLY", "MONTHLY"] as const;
+type RecurrenceFrequency = (typeof RECURRENCE_FREQUENCIES)[number];
+const MAX_OCCURRENCES = 52;
+
+function advance(date: Date, frequency: RecurrenceFrequency): Date {
+  const next = new Date(date);
+  if (frequency === "DAILY") next.setDate(next.getDate() + 1);
+  else if (frequency === "WEEKLY") next.setDate(next.getDate() + 7);
+  else next.setMonth(next.getMonth() + 1);
+  return next;
+}
+
+function buildOccurrences(startsAt: Date, endsAt: Date | null, frequency: RecurrenceFrequency, until: Date) {
+  const durationMs = endsAt ? endsAt.getTime() - startsAt.getTime() : null;
+  const occurrences: { startsAt: Date; endsAt: Date | null }[] = [];
+  let currentStart = startsAt;
+  while (currentStart <= until && occurrences.length < MAX_OCCURRENCES) {
+    occurrences.push({ startsAt: currentStart, endsAt: durationMs !== null ? new Date(currentStart.getTime() + durationMs) : null });
+    currentStart = advance(currentStart, frequency);
+  }
+  return occurrences;
+}
+
 eventsRouter.use(requireAuth);
 
 eventsRouter.get(
@@ -33,7 +56,7 @@ eventsRouter.get(
 eventsRouter.post(
   "/",
   asyncHandler(async (req, res) => {
-    const { title, description, location, startsAt, endsAt, coinValue } = req.body ?? {};
+    const { title, description, location, startsAt, endsAt, coinValue, repeat } = req.body ?? {};
 
     if (typeof title !== "string" || !title.trim()) {
       res.status(400).json({ error: "Title is required" });
@@ -58,16 +81,36 @@ eventsRouter.post(
       }
     }
 
+    const baseData = {
+      title: title.trim(),
+      description: description || null,
+      location: location || null,
+      coinValue: coinValueNum,
+      createdById: req.user!.userId,
+    };
+
+    if (repeat) {
+      const frequency = repeat.frequency;
+      if (!RECURRENCE_FREQUENCIES.includes(frequency)) {
+        res.status(400).json({ error: "repeat.frequency must be DAILY, WEEKLY, or MONTHLY" });
+        return;
+      }
+      const untilDate = new Date(repeat.until);
+      if (Number.isNaN(untilDate.getTime()) || untilDate < startsAtDate) {
+        res.status(400).json({ error: "repeat.until must be a valid date on or after the start date" });
+        return;
+      }
+
+      const occurrences = buildOccurrences(startsAtDate, endsAtDate, frequency, untilDate);
+      await prisma.event.createMany({
+        data: occurrences.map((o) => ({ ...baseData, startsAt: o.startsAt, endsAt: o.endsAt })),
+      });
+      res.status(201).json({ count: occurrences.length });
+      return;
+    }
+
     const event = await prisma.event.create({
-      data: {
-        title: title.trim(),
-        description: description || null,
-        location: location || null,
-        startsAt: startsAtDate,
-        endsAt: endsAtDate,
-        coinValue: coinValueNum,
-        createdById: req.user!.userId,
-      },
+      data: { ...baseData, startsAt: startsAtDate, endsAt: endsAtDate },
     });
     res.status(201).json(event);
   }),

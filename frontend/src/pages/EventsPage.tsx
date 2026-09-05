@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Check, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { api, ApiError, type EventItem } from '../lib/api';
+import { api, ApiError, type EventItem, type RecurrenceFrequency } from '../lib/api';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -300,6 +300,8 @@ function AddEventForm({ prefillDate, onCreated, onCancel }: { prefillDate: Date;
   const [startsAt, setStartsAt] = useState(prefillValue);
   const [endsAt, setEndsAt] = useState('');
   const [coinValue, setCoinValue] = useState(10);
+  const [repeatFrequency, setRepeatFrequency] = useState<'NONE' | RecurrenceFrequency>('NONE');
+  const [repeatUntil, setRepeatUntil] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -315,6 +317,10 @@ function AddEventForm({ prefillDate, onCreated, onCancel }: { prefillDate: Date;
         startsAt: new Date(startsAt).toISOString(),
         endsAt: endsAt ? new Date(endsAt).toISOString() : undefined,
         coinValue,
+        repeat:
+          repeatFrequency === 'NONE' || !repeatUntil
+            ? undefined
+            : { frequency: repeatFrequency, until: new Date(`${repeatUntil}T23:59:59`).toISOString() },
       });
       onCreated();
     } catch (err) {
@@ -359,10 +365,31 @@ function AddEventForm({ prefillDate, onCreated, onCancel }: { prefillDate: Date;
             />
           </label>
         </div>
+        <div className="flex flex-wrap gap-3">
+          <label className="flex flex-1 flex-col gap-1.5">
+            <span className={labelClass}>Repeat</span>
+            <select
+              value={repeatFrequency}
+              onChange={(e) => setRepeatFrequency(e.target.value as 'NONE' | RecurrenceFrequency)}
+              className={inputClass}
+            >
+              <option value="NONE">Does not repeat</option>
+              <option value="DAILY">Daily</option>
+              <option value="WEEKLY">Weekly</option>
+              <option value="MONTHLY">Monthly</option>
+            </select>
+          </label>
+          {repeatFrequency !== 'NONE' && (
+            <label className="flex flex-1 flex-col gap-1.5">
+              <span className={labelClass}>Repeat until</span>
+              <input type="date" required value={repeatUntil} onChange={(e) => setRepeatUntil(e.target.value)} className={inputClass} />
+            </label>
+          )}
+        </div>
         {error && <p className="text-sm font-bold text-primary-red">{error}</p>}
         <div className="mt-1 flex gap-3">
           <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? 'Adding…' : 'Add event'}
+            {submitting ? 'Adding…' : repeatFrequency === 'NONE' ? 'Add event' : 'Add events'}
           </Button>
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancel

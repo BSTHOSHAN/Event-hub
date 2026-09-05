@@ -1,5 +1,6 @@
 export type Role = 'MEMBER' | 'MENTOR' | 'MANAGER';
 export type AttendanceStatus = 'PENDING' | 'CONFIRMED' | 'DECLINED';
+export type RecurrenceFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
 export interface User {
   id: string;
@@ -31,6 +32,37 @@ export interface EventItem {
   attendances: EventAttendance[];
 }
 
+export interface StudentStat {
+  id: string;
+  name: string;
+  coins: number;
+  confirmed: number;
+  pending: number;
+  declined: number;
+}
+
+export interface EventStat {
+  id: string;
+  title: string;
+  startsAt: string;
+  totalStudents: number;
+  confirmed: number;
+  pending: number;
+  declined: number;
+}
+
+export interface StatsOverview {
+  summary: {
+    totalStudents: number;
+    totalEvents: number;
+    totalConfirmedAttendances: number;
+    totalPendingRequests: number;
+    totalCoinsAwarded: number;
+  };
+  students: StudentStat[];
+  events: EventStat[];
+}
+
 export class ApiError extends Error {}
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -60,10 +92,18 @@ export const api = {
   logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
 
   listUsers: () => request<User[]>('/api/users'),
+  getStats: () => request<StatsOverview>('/api/stats'),
 
   listEvents: () => request<EventItem[]>('/api/events'),
-  createEvent: (data: { title: string; description?: string; location?: string; startsAt: string; endsAt?: string; coinValue?: number }) =>
-    request<EventItem>('/api/events', { method: 'POST', body: JSON.stringify(data) }),
+  createEvent: (data: {
+    title: string;
+    description?: string;
+    location?: string;
+    startsAt: string;
+    endsAt?: string;
+    coinValue?: number;
+    repeat?: { frequency: RecurrenceFrequency; until: string };
+  }) => request<unknown>('/api/events', { method: 'POST', body: JSON.stringify(data) }),
   deleteEvent: (id: string) => request<void>(`/api/events/${id}`, { method: 'DELETE' }),
 
   signUp: (eventId: string, attended: boolean) =>
