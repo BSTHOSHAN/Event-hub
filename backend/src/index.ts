@@ -12,7 +12,11 @@ const port = process.env.PORT ?? 3001;
 
 // CORS_ORIGIN restricts cookie-bearing cross-site requests to the real
 // deployed frontend in production; falls back to reflecting any origin in dev.
-const corsOrigin = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : true;
+const corsOrigin = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
+  : true;
+console.log("CORS_ORIGIN env value:", JSON.stringify(process.env.CORS_ORIGIN));
+console.log("Parsed allowed origins:", JSON.stringify(corsOrigin));
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
