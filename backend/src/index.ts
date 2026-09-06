@@ -10,7 +10,10 @@ import { statsRouter } from "./routes/stats.js";
 const app = express();
 const port = process.env.PORT ?? 3001;
 
-app.use(cors({ origin: true, credentials: true }));
+// CORS_ORIGIN restricts cookie-bearing cross-site requests to the real
+// deployed frontend in production; falls back to reflecting any origin in dev.
+const corsOrigin = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : true;
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 

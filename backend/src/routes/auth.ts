@@ -10,10 +10,15 @@ const asyncHandler = (fn: RequestHandler): RequestHandler => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
+const isProduction = process.env.NODE_ENV === "production";
+
+// Cross-site cookies (frontend and backend on different domains in production)
+// require SameSite=None + Secure. Locally over http://localhost, Secure would
+// block the cookie entirely, so dev stays on Lax + non-secure.
 const cookieOptions = {
   httpOnly: true,
-  sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
+  sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
+  secure: isProduction,
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
@@ -78,7 +83,7 @@ authRouter.post(
 );
 
 authRouter.post("/logout", (_req, res) => {
-  res.clearCookie(AUTH_COOKIE_NAME);
+  res.clearCookie(AUTH_COOKIE_NAME, { httpOnly: cookieOptions.httpOnly, sameSite: cookieOptions.sameSite, secure: cookieOptions.secure });
   res.status(204).end();
 });
 

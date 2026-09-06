@@ -65,8 +65,12 @@ export interface StatsOverview {
 
 export class ApiError extends Error {}
 
+// In dev, Vite's proxy forwards /api/* to the backend so this stays empty.
+// In production, set VITE_API_URL to the deployed backend's origin.
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...options.headers },
     ...options,
